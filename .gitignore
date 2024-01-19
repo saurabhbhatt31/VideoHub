@@ -82,11 +82,10 @@ web_modules/
 .env.test.local
 .env.production.local
 .env.local
-.gitignore
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
-
+package-lock.json
 # Next.js build output
 .next
 out
