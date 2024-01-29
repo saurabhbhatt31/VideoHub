@@ -4,6 +4,7 @@ import app from "./app.js";
 dotenv.config();
 const port = process.env.PORT || 5000;
 dotenv.config({ path: ".env" });
+// import { User } from "./models/user.model.js";
 
 connectDB()
   .then(() => {
