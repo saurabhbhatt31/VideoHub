@@ -3,24 +3,25 @@ import { response } from "express";
 import fs from "fs";
 
 cloudinary.config({
-  cloud_name: `${process.env.CLOUDINARY_CLOUD_NAME}`,
-  api_key: `${process.env.CLOUDINARY_API_KEY}`,
-  api_secret: `${process.env.CLOUDINARY_API_SECRET}`,
+  cloud_name: "dnja7dihl",
+  api_key: "819879318628763",
+  api_secret: "w9sG_1kEIfkTu7_IR3op1VbGf6w",
 });
 
 const uploadOnCloudinary = async (localfilepath) => {
   try {
     if (!localfilepath) return null;
-    // upload the file on cloudinary
     const uploadeResponse = await cloudinary.uploader.upload(localfilepath, {
       resource_type: "auto",
     });
-    // file has been uploaded successfully
     console.log("File is uploaded on cloudinary");
     console.log("Uploaded Response", uploadeResponse.url);
-    return response;
+    return uploadeResponse;
   } catch (error) {
     // remove the locally saved file as the upload operation got failed
+    fs.unlinkSync(localfilepath);
+    console.log("Error in uploading on cloudnry", error);
+  } finally {
     fs.unlinkSync(localfilepath);
   }
 };
