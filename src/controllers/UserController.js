@@ -4,7 +4,6 @@ import ApiError from "../utils/ApiError.js";
 import { ApiResponse, apiResponse } from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
-import { set } from "mongoose";
 
 const genereateAccessAndRefreshToken = async (userId) => {
   try {
@@ -298,6 +297,77 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   }
 });
 
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  try {
+    const username = req.query?.username;
+    console.log("DSAFFFFFFFFFFFFFFFFFF+++++++++++++++++++", username);
+    if (!username) {
+      return apiResponse(res, false, 303, "username not found ");
+    }
+    const userChannelProfile = await User.aggregate([
+      {
+        $match: {
+          username: username?.toLowerCase(),
+        },
+      },
+      {
+        $lookup: {
+          from: subscriptions,
+          localField: _id,
+          foreignField: subscriber,
+          as: subscribers,
+        },
+      },
+      {
+        $lookup: {
+          from: subscriptions,
+          localField: _id,
+          foreignField: channel,
+          as: subscribedTo,
+        },
+      },
+      {
+        $addFields: {
+          subscriberCount: {
+            $size: "$subscriber",
+          },
+          channelSubscribedCount: {
+            $size: "$subscribedTo",
+          },
+          isSubscribed: {
+            $cond: {
+              if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+              then: true,
+              else: false,
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          username: 1,
+          fullname: 1,
+          subscriberCount: 1,
+          channelSubscribedCount: 1,
+          isSubscribed: 1,
+        },
+      },
+    ]);
+
+    if (!userChannelProfile?.length) {
+      return apiResponse(res, false, "channel doesn't exists!");
+    }
+    return apiResponse(
+      res,
+      200,
+      userChannelProfile[0],
+      "Channel information fetched successfully!"
+    );
+  } catch (error) {
+    console.log("Error in retrieving user channel profile ", error);
+    return apiResponse(res, false, 500, "Something went wrong");
+  }
+});
 export {
   registerUser,
   login,
@@ -307,4 +377,5 @@ export {
   getCurrentUser,
   updateUserAvatar,
   updateUserCoverImage,
+  getUserChannelProfile,
 };

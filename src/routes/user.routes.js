@@ -7,6 +7,7 @@ import {
   getCurrentUser,
   updateUserAvatar,
   updateUserCoverImage,
+  getUserChannelProfile,
 } from "../controllers/UserController.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { Router } from "express";
@@ -44,4 +45,6 @@ userRouter
     upload.fields([{ name: "coverimage", maxCount: 1 }]),
     updateUserCoverImage
   );
+
+userRouter.route("/get-channel-profile").get(verifyJWT, getUserChannelProfile);
 export default userRouter;
