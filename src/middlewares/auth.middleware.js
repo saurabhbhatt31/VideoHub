@@ -4,8 +4,8 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 
 export const verifyJWT = asyncHandler(async (req, _, next) => {
-  try {
-    const token =req.cokkies?.accessToken || req.header("Authorization").replace("Bearer ", "");
+
+    const token =req.cokkies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
     if (!token) {
       throw new ApiError(401, "Unauthorized request");
     }
@@ -17,8 +17,8 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
     }
     req.user = user;
     next();
-  } catch (error) {
-    console.log("Error in verify token :", error);
-    throw new ApiError("Error in token verification ");
-  }
+  // } catch (error) {
+  //   console.log("Error in verify token :", error);
+  //   throw new ApiError("Error in token verification ");
+  // }  
 });

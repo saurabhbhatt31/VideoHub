@@ -1,3 +1,6 @@
+import { Router } from "express";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 import {
   registerUser,
   login,
@@ -9,9 +12,6 @@ import {
   updateUserCoverImage,
   getUserChannelProfile,
 } from "../controllers/UserController.js";
-import { upload } from "../middlewares/multer.middleware.js";
-import { Router } from "express";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const userRouter = Router();
 
@@ -22,12 +22,17 @@ userRouter.route("/register").post(
   ]),
   registerUser
 );
+
 userRouter.route("/login").post(login);
+
 userRouter.route("/logout").post(verifyJWT, logOutUser);
+
 userRouter
   .route("/change-current-password")
   .post(verifyJWT, changeCurrentPassword);
+
 userRouter.route("/refresh-access-token").post(refreshAcessToken);
+
 userRouter.route("/get-current-user").get(verifyJWT, getCurrentUser);
 
 userRouter
@@ -39,10 +44,10 @@ userRouter
   );
 
 userRouter
-  .route("/update-user-avatar")
+  .route("/update-cover-image")
   .post(
     verifyJWT,
-    upload.fields([{ name: "coverimage", maxCount: 1 }]),
+    upload.fields([{ name: "cover_image", maxCount: 1 }]),
     updateUserCoverImage
   );
 

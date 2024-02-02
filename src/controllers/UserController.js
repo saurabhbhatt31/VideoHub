@@ -1,4 +1,6 @@
 import { User } from "../models/user.model.js";
+import { Subscription } from "../models/subscription.model.js";
+import { Like } from "../models/like.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import ApiError from "../utils/ApiError.js";
 import { ApiResponse, apiResponse } from "../utils/ApiResponse.js";
@@ -201,7 +203,6 @@ const refreshAcessToken = asyncHandler(async (req, res) => {
       );
   } catch (error) {
     console.log("Error in refreshAccessToken", error);
-    // If error is an instance of ApiError, return its status code; otherwise, default to 500
     const statusCode = error instanceof ApiError ? error.statusCode : 500;
     const message =
       error instanceof ApiError ? error.message : "Internal Server Error";
@@ -237,7 +238,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
 const getCurrentUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user?._id).select(
-    " -password -refreshToken -coverImage -watchHistory"
+    " -password -refreshToken  -watchHistory"
   );
   if (!user) {
     throw new ApiError(404, "Invalid request");
@@ -272,64 +273,58 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 });
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
-  try {
-    if (req.files?.coverImage == undefined) {
-      throw new ApiError(401, "cover image is required");
-    }
-    const converImageLocaPath = req.files?.avatar[0]?.path;
-    const converimage = await uploadOnCloudinary(converImageLocaPath);
-    if (!converimage.url) {
-      throw new ApiError(500, "Error while updating cover image");
-    }
-    const user = await User.findByIdAndUpdate(
-      req?.user?._id,
-      {
-        $set: { converimage: converimage.url },
-      },
-      { new: true }
-    ).select("-password");
-    return res
-      .status(200)
-      .json(new ApiResponse(200, user, "Cover Image updated successfully"));
-  } catch (error) {
-    console.log("Error in updating user cover image", error);
-    throw new ApiError(500, "Error in updating  cover image");
+  if (req.files?.cover_image == undefined) {
+    throw new ApiError(401, "cover image is required");
   }
+  const converImageLocaPath = req.files?.cover_image[0]?.path;
+  const converimage = await uploadOnCloudinary(converImageLocaPath);
+  if (!converimage.url) {
+    throw new ApiError(500, "Error while updating cover image");
+  }
+  const user = await User.findByIdAndUpdate(
+    req?.user?._id,
+    {
+      $set: { coverImage: converimage.url },
+    },
+    { new: true }
+  ).select("-password");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Cover Image updated successfully"));
 });
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
   try {
     const username = req.query?.username;
-    console.log("DSAFFFFFFFFFFFFFFFFFF+++++++++++++++++++", username);
     if (!username) {
       return apiResponse(res, false, 303, "username not found ");
     }
     const userChannelProfile = await User.aggregate([
       {
         $match: {
-          username: username?.toLowerCase(),
+          username: username ? username.toLowerCase() : null,
         },
       },
       {
         $lookup: {
-          from: subscriptions,
-          localField: _id,
-          foreignField: subscriber,
-          as: subscribers,
+          from: "Subscription",
+          localField: "_id",
+          foreignField: "subscriber",
+          as: "subscribers",
         },
       },
       {
         $lookup: {
-          from: subscriptions,
-          localField: _id,
-          foreignField: channel,
-          as: subscribedTo,
+          from: "Subscription",
+          localField: "_id",
+          foreignField: "channel",
+          as: "subscribedTo",
         },
       },
       {
         $addFields: {
           subscriberCount: {
-            $size: "$subscriber",
+            $size: "$subscribers",
           },
           channelSubscribedCount: {
             $size: "$subscribedTo",
@@ -345,8 +340,11 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
       },
       {
         $project: {
+          _id: 0,
           username: 1,
           fullname: 1,
+          avatar: 1,
+          coverImage: 1,
           subscriberCount: 1,
           channelSubscribedCount: 1,
           isSubscribed: 1,
@@ -359,6 +357,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     }
     return apiResponse(
       res,
+      true,
       200,
       userChannelProfile[0],
       "Channel information fetched successfully!"
@@ -368,6 +367,11 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     return apiResponse(res, false, 500, "Something went wrong");
   }
 });
+
+const getUserWatchHistory = asyncHandler(async (req, res) => {
+  const { username } = req.query.params;
+});
+
 export {
   registerUser,
   login,
@@ -378,4 +382,5 @@ export {
   updateUserAvatar,
   updateUserCoverImage,
   getUserChannelProfile,
+  getUserWatchHistory,
 };
